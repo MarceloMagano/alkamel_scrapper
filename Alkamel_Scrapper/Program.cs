@@ -1,3 +1,5 @@
+using Alkamel_Scrapper;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -16,29 +18,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
+// GET WEC  with url parameter year
+app.MapGet("/wec", async (HttpContext context, int year, string eventNumber) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    var urls = await WEC.ScrapeData(year, eventNumber);
+    await WEC.DownloadFiles(urls);
+    await context.Response.WriteAsJsonAsync(urls);
+});
 
-app.MapGet("/weatherforecast", () =>
+// GET IMSA
+app.MapGet("/imsa", async (HttpContext context) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+    await context.Response.WriteAsJsonAsync("Hello IMSA!");
+});
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
